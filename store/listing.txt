@@ -1,0 +1,52 @@
+# Chrome Web Store listing
+
+## Name
+Sentiment Latent Space
+
+## Short description (max 132 chars)
+Analyze Reddit posts in 3D semantic space — fully private, runs entirely in your browser.
+
+## Detailed description
+Sentiment Latent Space turns any Reddit post into an interactive 3D map of opinions.
+
+Click the "Analyze in 3D" button on a Reddit post page and the extension will:
+
+1. Read the post and its comments using Reddit's public data endpoint.
+2. Embed every comment into a 384-dimensional semantic vector using the local all-MiniLM-L6-v2 model.
+3. Project those vectors into a 3D scatter plot with UMAP.
+4. Group similar comments into color-coded clusters with DBSCAN.
+
+What you see:
+- A large gold sphere for the original post.
+- Colored points for comments — each color is a semantic cluster.
+- Drag to rotate, scroll to zoom, hover to read the comment, click to open it.
+
+Everything stays on your device. No backend, no accounts, no data collection. On first use the model is downloaded from Hugging Face and cached locally.
+
+Perfect for journalists, researchers, moderators, and anyone who wants to see the shape of a conversation at a glance.
+
+## Category
+Productivity
+
+## Languages
+English
+
+## Privacy policy
+See PRIVACY.md (host this text on a public URL for the store listing).
+
+## Website
+(Optional) link to the GitHub repository.
+
+## Support email
+(Optional)
+
+## Screenshots needed
+1. Reddit post page with the "Analyze in 3D" button visible.
+2. Full-screen 3D overlay showing the post as a gold sphere and comments as colored points.
+3. Hover tooltip showing a comment.
+4. Close-up of the legend panel.
+
+## Promotional images
+- Small: 440x280
+- Large: 920x680
+- Marquee: 1400x560

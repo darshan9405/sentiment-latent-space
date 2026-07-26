@@ -1,144 +1,98 @@
-# Internet Sentiment Latent Space
+# Sentiment Latent Space
 
-A 3D visualization of trending internet topics projected into semantic latent space. The pipeline fetches real-time trending keywords from Google Trends, discovers related web content, summarizes it using LLM, generates sentence embeddings, and projects them into a 3D interactive visualization using UMAP + HDBSCAN.
+A fully client-side Chrome extension that analyzes Reddit posts in 3D semantic space. No backend, no data collection, no API keys.
 
-## Architecture
+## Key features
+
+- **Runs entirely in your browser** — embeddings, UMAP, clustering, and 3D rendering all happen locally.
+- **Continues in the background** — start an analysis, then navigate to another page or tab. You’ll get a notification when it’s ready.
+- **Cached results** — reopen a post you already analyzed and click “View 3D analysis” to see the overlay again.
+- **Progressive feedback** — a small floating pill shows live progress (model loading, embedding, projection, clustering).
+- **Parallel ONNX Runtime** — uses multi-threaded WASM for faster inference.
+
+## How it works
 
 ```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌────────────┐    ┌──────────┐    ┌──────────┐
-│   Google    │    │  DuckDuckGo  │    │   HTTP      │    │   LLM      │    │  384-dim  │    │  3D +    │
-│   Trends    │───▶│  Search      │───▶│   Fetch     │───▶│  Summarize  │───▶│  Embed    │───▶│  Cluster │
-│  (trendspyg)│    │  (scraper)   │    │  (trafilatura)│   │ (Zen API)  │    │(MiniLM-L6)│    │(UMAP+HDB)│
-└─────────────┘    └──────────────┘    └─────────────┘    └────────────┘    └──────────┘    └──────────┘
-                                                                                              │
-                                                                                              ▼
-                                                                                     ┌─────────────────┐
-                                                                                     │   Three.js 3D   │
-                                                                                     │   Frontend      │
-                                                                                     └─────────────────┘
+Reddit post
+    ↓
+Content script reads the post + comments via Reddit's public .json endpoint
+    ↓
+Background service worker owns a hidden Offscreen document
+    ↓
+Offscreen document runs the ML pipeline:
+   - all-MiniLM-L6-v2 embeddings (Transformers.js)
+   - UMAP 3D projection
+   - DBSCAN clustering
+    ↓
+Result is stored in chrome.storage.local
+    ↓
+Overlay opens on the post page (or a notification if you navigated away)
 ```
 
-### Pipeline Steps
-
-1. **Trends Fetcher** (`trends_fetcher.py`) — Fetches real-time trending keywords from Google Trends RSS feed via `trendspyg`
-2. **Discovery** (`discovery.py`) — Searches each keyword on DuckDuckGo HTML search and returns top result URLs
-3. **Page Fetcher** (`page_fetcher.py`) — Concurrently fetches pages with `httpx` and extracts readable content using `trafilatura`
-4. **Summarizer** (`summarizer.py`) — Summarizes each page via OpenCode Zen LLM API (falls back to extractive summary)
-5. **Embedder** (`embedder.py`) — Converts summaries into 384-dimensional vectors using `all-MiniLM-L6-v2`
-6. **Projector** (`projector.py`) — Reduces embeddings to 3D with UMAP (cosine distance), clusters with HDBSCAN, assembles JSON snapshot
-7. **Frontend** — Three.js interactive 3D scatter plot with hover tooltips, orbit controls, and pipeline trigger
-
-## Setup
-
-### Prerequisites
-
-- Python 3.10+
-- [OpenCode Zen API key](https://opencode.ai/zen) (for LLM summarization)
-
-### Installation
+## Build
 
 ```bash
-# Clone the repository
-cd sentiment-latent-space
-
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your OpenCode Zen API key
+npm install
+npm run build
 ```
 
-### Configuration
+This produces a ready-to-publish `extension/` folder.
 
-| Variable | Default | Description |
-|---|---|---|
-| `ZEN_API_KEY` | — | OpenCode Zen API key for LLM summarization |
-| `ZEN_MODEL` | `gpt-5.4-nano` | LLM model for summarization |
-| `ZEN_BASE_URL` | `https://opencode.ai/zen/v1` | Zen API base URL |
-| `COUNTRY_CODE` | `IN` | ISO country code for trending topics |
-| `COUNTRY_NAME` | `India` | Display name for the country |
-| `MAX_TRENDS` | `20` | Number of trending keywords to process |
-| `MAX_PAGES_PER_KEYWORD` | `12` | URLs to fetch per keyword |
-| `PIPELINE_INTERVAL_HOURS` | `6` | Auto-refresh interval (applied on restart) |
+## Load locally
 
-## Usage
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select the `extension/` folder
 
-### Start the server
+## Publish to Chrome Web Store
 
-```bash
-./start.sh
+1. Run `npm run build`
+2. Zip the `extension/` folder:
+   ```bash
+   cd extension && zip -r ../extension.zip .
+   ```
+3. Upload `extension.zip` to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole/)
+4. Use the assets in `store/` for the listing and host `PRIVACY.md` as your privacy policy URL.
+
+## Project structure
+
+```
+.
+├── src/
+│   ├── content.js          # Injected button + progress pill + overlay
+│   ├── background.js       # Service worker + offscreen document management
+│   ├── offscreen.js        # ML pipeline (embed → UMAP → cluster)
+│   ├── offscreen.html      # Hidden ML document
+│   ├── overlay.js          # Three.js 3D visualization
+│   ├── overlay.html        # Overlay page
+│   ├── overlay.css         # Overlay styles
+│   ├── manifest.json       # Extension manifest
+│   └── icons/              # 16/48/128 PNG icons
+├── extension/              # Built extension (load this folder)
+├── build.js                # Rollup-based build script
+├── package.json            # Dependencies
+├── generate_icons.py       # Icon generator
+├── PRIVACY.md              # Privacy policy
+├── store/                  # Store listing assets
+└── README.md               # This file
 ```
 
-Or manually:
+## Tech stack
 
-```bash
-source venv/bin/activate
-python backend/main.py
-```
+- Transformers.js (`all-MiniLM-L6-v2`) — local embeddings
+- umap-js — 3D projection
+- density-clustering — DBSCAN clustering
+- Three.js — 3D visualization
+- Rollup — bundling
+- Chrome Offscreen API — background ML processing
 
-The server starts at `http://localhost:8000`.
+## Permissions
 
-### API Endpoints
+- `activeTab` — to confirm the current page is a Reddit post
+- `offscreen` — to run the ML pipeline in a background document
+- `storage` — to cache completed analyses
+- `notifications` — to notify you when a background analysis is ready
+- `host_permissions` for `huggingface.co` — to download the embedding model on first run (cached locally)
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/` | Frontend 3D visualization |
-| `GET` | `/api/snapshot?country=IN` | Latest snapshot data (JSON) |
-| `POST` | `/api/run-pipeline` | Manually trigger the pipeline |
-| `GET` | `/api/health` | Health check with snapshot metadata |
-| `GET` | `/api/countries` | List supported countries |
-| `GET` | `/docs` | Swagger UI |
-
-### Frontend Controls
-
-- **Drag** — Rotate the 3D scene
-- **Scroll** — Zoom in/out
-- **Hover** — View keyword, title, summary, and URL
-- **Click** — Open the source URL
-- **Refresh Snapshot** — Triggers a full pipeline run
-
-## Snapshot Format
-
-```json
-{
-  "country": "India",
-  "country_code": "IN",
-  "point_count": 127,
-  "generated_at": "2026-07-26T08:25:52.708868+00:00",
-  "keywords": ["cricket", "monsoon", "budget 2026", ...],
-  "points": [
-    {
-      "id": 0,
-      "keyword": "cricket world cup",
-      "title": "ICC World Cup 2026 Schedule",
-      "url": "https://example.com/article",
-      "summary": "The ICC Cricket World Cup 2026...",
-      "source": "page",
-      "x": -2.34, "y": 1.56, "z": 0.78,
-      "cluster": 2
-    }
-  ]
-}
-```
-
-Points with `cluster: -1` are considered noise/outliers by HDBSCAN.
-
-## Tech Stack
-
-| Component | Technology |
-|---|---|
-| Framework | FastAPI + Uvicorn |
-| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) |
-| Dimensionality Reduction | UMAP (cosine metric) |
-| Clustering | HDBSCAN |
-| Web Scraping | curl_cffi + BeautifulSoup |
-| Text Extraction | trafilatura |
-| LLM | OpenCode Zen API |
-| Trends | trendspyg (Google Trends RSS) |
-| Visualization | Three.js + OrbitControls |
-| Async HTTP | httpx + aiohttp |
+All processing happens in your browser. No Reddit data, comments, or analytics are sent anywhere.

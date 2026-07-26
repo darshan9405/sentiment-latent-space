@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Sentiment Latent Space",
+  "version": "1.0.0",
+  "description": "Analyze Reddit posts in 3D semantic space — fully client-side, continues in the background.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Sentiment Latent Space"
+  },
+  "permissions": ["activeTab", "offscreen", "storage", "notifications"],
+  "host_permissions": [
+    "https://huggingface.co/*",
+    "https://cdn-lfs.huggingface.co/*",
+    "https://*.cdn-lfs.huggingface.co/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.reddit.com/*",
+        "https://reddit.com/*",
+        "https://old.reddit.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "overlay.html",
+        "overlay.js",
+        "overlay.css",
+        "offscreen.html",
+        "offscreen.js",
+        "lib/*",
+        "icons/*"
+      ],
+      "matches": [
+        "https://www.reddit.com/*",
+        "https://reddit.com/*",
+        "https://old.reddit.com/*"
+      ]
+    }
+  ]
+}

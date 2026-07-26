@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentiment Latent Space</title>
+  <link rel="stylesheet" href="overlay.css" />
+</head>
+<body>
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text">Loading 3D scene...</div>
+  </div>
+
+  <header id="header">
+    <div class="header-left">
+      <div class="logo-mark">&#9670;</div>
+      <div>
+        <h1>Sentiment Latent Space</h1>
+        <div id="subtitle">Post + comments projected into 3D semantic space</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <input id="search-input" type="text" placeholder="Search comments..." autocomplete="off" />
+    </div>
+    <button id="close-btn" title="Close (Esc)">&times;</button>
+  </header>
+
+  <aside id="legend">
+    <h3>Legend</h3>
+    <div class="legend-item">
+      <span class="legend-dot gold"></span>
+      <span>Post</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot varied"></span>
+      <span>Comments</span>
+    </div>
+    <div class="legend-sep"></div>
+    <div class="legend-hint">
+      <strong>Drag</strong> to rotate<br/>
+      <strong>Scroll</strong> to zoom<br/>
+      <strong>Hover</strong> to read<br/>
+      <strong>Click</strong> a point to open it
+    </div>
+    <div id="cluster-topics" style="display:none;">
+      <div class="legend-sep"></div>
+      <h3>Cluster topics</h3>
+    </div>
+  </aside>
+
+  <div id="status-bar">
+    <span id="status-text">Initializing...</span>
+  </div>
+
+  <div id="tooltip"></div>
+
+  <script src="overlay.js"></script>
+</body>
+</html>

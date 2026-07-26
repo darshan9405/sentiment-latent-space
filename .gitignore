@@ -1,0 +1,11 @@
+venv/
+.env
+backend/app/data/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.log
+*.pid
+.DS_Store
